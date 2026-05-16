@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CallMate AI - Canlı Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0f4c81;
+            --secondary: #ff8c00;
+            --accent: #00b4db;
+            --light-bg: #f8fafc;
+            --dark-text: #232f3e;
+            --light-text: #788ca0;
+            --success: #28a745;
+            --danger: #dc3545;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--light-bg);
+            color: var(--dark-text);
+        }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .status-badge {
+            background: var(--success);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-badge.connecting {
+            background: #ffc107;
+        }
+
+        .status-badge.recording {
+            background: var(--danger);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .call-timer {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--secondary);
+            font-family: 'Courier New', monospace;
+            margin-bottom: 1rem;
+        }
+
+        .customer-info {
+            background: var(--light-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .customer-info p {
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .transcript-box {
+            background: var(--light-bg);
+            border-left: 4px solid var(--secondary);
+            padding: 1rem;
+            border-radius: 6px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .transcript-line {
+            margin-bottom: 0.8rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .transcript-line.customer { color: #0066cc; }
+        .transcript-line.operator { color: #cc6600; }
+        .transcript-line.system { color: #28a745; font-weight: 600; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 140, 0, 0.3);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ANALYSIS PANELS */
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric {
+            background: var(--light-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--light-text);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--secondary);
+        }
+
+        .metric-unit {
+            font-size: 0.85rem;
+            color: var(--light-text);
+        }
+
+        .emotion-bars {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .emotion-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .emotion-bar {
+            background: var(--light-bg);
+            height: 40px;
+            border-radius: 20px;
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+        }
+
+        .emotion-fill {
+            height: 100%;
+            border-radius: 20px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 0.5rem;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .emotion-label {
+            font-size: 0.8rem;
+            color: var(--light-text);
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tag {
+            background: var(--secondary);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .recommendations {
+            background: linear-gradient(135deg, rgba(0, 180, 219, 0.1), rgba(255, 140, 0, 0.05));
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .rec-item {
+            margin-bottom: 0.6rem;
+            font-size: 0.85rem;
+            color: var(--dark-text);
+        }
+
+        .rec-item::before {
+            content: "→ ";
+            color: var(--accent);
+            font-weight: 600;
+            margin-right: 0.4rem;
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--light-bg);
+            padding-bottom: 0.8rem;
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--light-text);
+            padding: 2rem;
+        }
+
+        .spinner {
+            border: 3px solid var(--light-bg);
+            border-top: 3px solid var(--secondary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: rgba(220, 53, 69, 0.1);
+            color: #c82333;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #c82333;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 1200px) {
+            .container { grid-template-columns: 1fr; }
+            .analysis-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            header { flex-direction: column; gap: 1rem; }
+            .analysis-grid { grid-template-columns: 1fr; }
+            .emotion-bars { flex-direction: column; }
+        }
+
+        .transcript-box::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .transcript-box::-webkit-scrollbar-track {
+            background: var(--light-bg);
+        }
+
+        .transcript-box::-webkit-scrollbar-thumb {
+            background: var(--secondary);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <div class="header-title">🎙️ CallMate AI - Canlı Demo</div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">Gerçek Zamanlı Çağrı Analizi</div>
+        </div>
+        <div>
+            <span class="status-badge" id="statusBadge">Hazır</span>
+            <div style="font-size: 0.8rem; margin-top: 0.3rem; color: white;">
+                API: <span id="apiStatus">Kontrol ediliyor...</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- LEFT PANEL -->
+        <div class="panel">
+            <div class="call-timer" id="callTimer">0:00</div>
+            
+            <div class="customer-info" id="customerInfo">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Müşteri bilgisi yükleniyor...
+                </div>
+            </div>
+
+            <div>
+                <div class="card-title">📝 Transkript</div>
+                <div class="transcript-box" id="transcriptBox">
+                    <div style="color: var(--light-text); text-align: center; padding: 2rem;">
+                        Demo başlatılmasını bekliyor...
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" onclick="startLiveDemo()">
+                    ▶ Demo Başlat
+                </button>
+                <button class="btn btn-danger" id="stopBtn" onclick="stopDemo()" disabled>
+                    ⏹ Durdur
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="panel">
+            <div id="analysisPanel" style="display: none;">
+                <!-- METRICS -->
+                <div class="card-title">📊 Gerçek Zamanlı Metrikler</div>
+                <div class="analysis-grid" id="metricsGrid">
+                    <div class="metric">
+                        <div class="metric-label">STT Doğruluk</div>
+                        <div class="metric-value"><span id="sttAccuracy">0</span><span class="metric-unit">%</span></div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Stres Seviyesi</div>
+                        <div class="metric-value"><span id="stressLevel">0</span><span class="metric-unit">%</span></div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Memnuniyet</div>
+                        <div class="metric-value"><span id="satisfaction">0</span><span class="metric-unit">/10</span></div>
+                    </div>
+                </div>
+
+                <!-- EMOTIONS -->
+                <div class="card-title">😊 Duygusal Durum</div>
+                <div class="emotion-bars" id="emotionBars">
+                    <div class="emotion-item">
+                        <div class="emotion-bar">
+                            <div class="emotion-fill" id="emotionHappy" style="width: 0%; background: linear-gradient(90deg, #28a745, #52c41a);"></div>
+                        </div>
+                        <div class="emotion-label">Mutlu</div>
+                    </div>
+                    <div class="emotion-item">
+                        <div class="emotion-bar">
+                            <div class="emotion-fill" id="emotionNeutral" style="width: 0%; background: linear-gradient(90deg, #6c757d, #adb5bd);"></div>
+                        </div>
+                        <div class="emotion-label">Nötr</div>
+                    </div>
+                    <div class="emotion-item">
+                        <div class="emotion-bar">
+                            <div class="emotion-fill" id="emotionAngry" style="width: 0%; background: linear-gradient(90deg, #dc3545, #fd7e14);"></div>
+                        </div>
+                        <div class="emotion-label">Sinirli</div>
+                    </div>
+                </div>
+
+                <!-- PERSONALITY -->
+                <div class="card-title">🧠 Kişilik Profili</div>
+                <div class="tags" id="personalityTags"></div>
+
+                <!-- RECOMMENDATIONS -->
+                <div class="card-title">💡 Live Coaching</div>
+                <div class="recommendations" id="recommendations">
+                    <div class="rec-item">Öneriler yükleniyor...</div>
+                </div>
+            </div>
+
+            <div id="loadingPanel">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>API bağlantısı kontrol ediliyor...</p>
+                    <p style="margin-top: 1rem; font-size: 0.85rem;">
+                        FastAPI sunucusunun çalışmakta olduğundan emin olun:<br>
+                        <code style="background: var(--light-bg); padding: 0.3rem 0.6rem; border-radius: 4px;">
+                            python callmate_api.py
+                        </code>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let demoRunning = false;
+        let callTimer = 0;
+        let timerInterval;
+        let websocket = null;
+
+        // API Health Check
+        async function checkAPI() {
+            try {
+                const response = await fetch(`${API_URL}/api/health`);
+                if (response.ok) {
+                    document.getElementById('apiStatus').textContent = '🟢 Online';
+                    document.getElementById('loadingPanel').style.display = 'none';
+                    document.getElementById('analysisPanel').style.display = 'block';
+                    
+                    // Müşteri bilgisini yükle
+                    loadCustomerInfo();
+                    return true;
+                }
+            } catch (error) {
+                console.error('API Hatası:', error);
+                document.getElementById('apiStatus').textContent = '🔴 Offline';
+            }
+            return false;
+        }
+
+        async function loadCustomerInfo() {
+            try {
+                const response = await fetch(`${API_URL}/api/customer/random`);
+                const data = await response.json();
+                
+                document.getElementById('customerInfo').innerHTML = `
+                    <p><strong>👤 Müşteri:</strong> ${data.name}</p>
+                    <p><strong>📱 Telefon:</strong> ${data.phone}</p>
+                    <p><strong>🛍️ Önceki Satın:</strong> ${data.prev_purchases}</p>
+                    <p><strong>⭐ Segment:</strong> ${data.segment}</p>
+                `;
+            } catch (error) {
+                console.error('Müşteri yükleme hatası:', error);
+            }
+        }
+
+        async function startLiveDemo() {
+            if (demoRunning) return;
+            
+            demoRunning = true;
+            callTimer = 0;
+            
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('statusBadge').className = 'status-badge recording';
+            document.getElementById('statusBadge').textContent = '● REC ACTIVE';
+            document.getElementById('transcriptBox').innerHTML = '';
+
+            // Timer başlat
+            timerInterval = setInterval(() => {
+                callTimer++;
+                const minutes = Math.floor(callTimer / 60);
+                const seconds = callTimer % 60;
+                document.getElementById('callTimer').textContent = 
+                    `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            }, 1000);
+
+            // WebSocket bağlantısı kur
+            connectWebSocket();
+        }
+
+        function connectWebSocket() {
+            const callId = `LIVE_${Date.now()}`;
+            
+            try {
+                websocket = new WebSocket(`ws://127.0.0.1:8000/ws/call/${callId}`);
+                
+                websocket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    handleWebSocketMessage(data);
+                };
+                
+                websocket.onerror = (error) => {
+                    console.error('WebSocket hatası:', error);
+                    showError('WebSocket bağlantı hatası. API sunucusunun çalışmakta olduğundan emin olun.');
+                };
+                
+                websocket.onclose = () => {
+                    console.log('WebSocket kapatıldı');
+                };
+            } catch (error) {
+                console.error('WebSocket başlatma hatası:', error);
+                showError('WebSocket bağlantısı başarısız oldu');
+            }
+        }
+
+        function handleWebSocketMessage(data) {
+            if (data.type === 'transcript') {
+                addTranscriptLine(data.line);
+            } else if (data.type === 'metrics') {
+                updateMetrics(data.data);
+            } else if (data.type === 'emotions') {
+                updateEmotions(data.data);
+            } else if (data.type === 'personality') {
+                const tags = data.data.traits.map(t => `<span class="tag">${t}</span>`).join('');
+                document.getElementById('personalityTags').innerHTML = tags;
+            } else if (data.type === 'recommendations') {
+                const recs = data.data.recommendations.map(r => `<div class="rec-item">${r}</div>`).join('');
+                document.getElementById('recommendations').innerHTML = recs;
+            } else if (data.type === 'complete') {
+                stopDemo();
+            }
+        }
+
+        function addTranscriptLine(line) {
+            const transcriptBox = document.getElementById('transcriptBox');
+            const lineElement = document.createElement('div');
+            lineElement.className = `transcript-line ${line.role}`;
+            lineElement.textContent = line.text;
+            transcriptBox.appendChild(lineElement);
+            transcriptBox.scrollTop = transcriptBox.scrollHeight;
+        }
+
+        function updateMetrics(data) {
+            document.getElementById('sttAccuracy').textContent = data.stt_accuracy;
+            document.getElementById('stressLevel').textContent = data.stress_level;
+            document.getElementById('satisfaction').textContent = data.satisfaction.toFixed(1);
+        }
+
+        function updateEmotions(data) {
+            document.getElementById('emotionHappy').style.width = data.happy + '%';
+            document.getElementById('emotionNeutral').style.width = data.neutral + '%';
+            document.getElementById('emotionAngry').style.width = data.angry + '%';
+        }
+
+        async function stopDemo() {
+            demoRunning = false;
+            clearInterval(timerInterval);
+            
+            if (websocket) {
+                websocket.close();
+            }
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('statusBadge').className = 'status-badge';
+            document.getElementById('statusBadge').textContent = 'Tamamlandı';
+        }
+
+        function showError(message) {
+            const panel = document.getElementById('analysisPanel');
+            if (!panel.querySelector('.error')) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.textContent = message;
+                panel.insertBefore(errorDiv, panel.firstChild);
+            }
+        }
+
+        // Sayfa yüklenmesinde API kontrol et
+        window.addEventListener('load', checkAPI);
+        
+        // 5 saniyede bir API kontrolü
+        setInterval(checkAPI, 5000);
+    </script>
+</body>
+</html>
